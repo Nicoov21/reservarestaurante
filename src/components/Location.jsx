@@ -8,7 +8,6 @@ export default function LocationSection() {
               title="Mapa Quijote"
               width="100%" 
               height="100%" 
-              frameBorder="0" 
               style={{ border: 0 }} 
               src="https://maps.google.com/maps?q=Barros+Arana+673,+Concepcion&t=&z=15&ie=UTF8&iwloc=&output=embed"
               allowFullScreen
@@ -29,7 +28,6 @@ export default function LocationSection() {
 
             <div className="contact-item">
               <div className="icon-box">
-                {/* Icono de Reloj (SVG) */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <div>

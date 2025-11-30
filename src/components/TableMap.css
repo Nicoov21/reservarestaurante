@@ -1,0 +1,170 @@
+/* src/components/TableMap.css */
+
+.map-layout {
+    display: flex;
+    gap: 20px;
+    height: 550px;
+    background-color: #f5f0e6; /* Fondo beige claro */
+    padding: 20px;
+    border-radius: 15px;
+  }
+  
+  /* --- LADO IZQUIERDO: EL PLANO --- */
+  .restaurant-floor {
+    flex: 4;
+    background-color: white;
+    border: 2px solid #3e2723;
+    border-radius: 10px;
+    position: relative; /* Para poder mover las mesas con absolute */
+    overflow: hidden; /* Que nada se salga del mapa */
+  }
+  
+  /* Estructuras del Restaurante */
+  .structure {
+    position: absolute;
+    background-color: #d7ccc8; /* Color café claro de la imagen */
+    border: 1px solid #8d6e63;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #5d4037;
+    font-size: 0.9rem;
+  }
+  
+  .barra { top: 0; left: 10%; width: 25%; height: 60px; border-top: none; }
+  .cocina { top: 0; right: 0; width: 30%; height: 50px; border-top: none; border-right: none;}
+  .escalera { top: 0; left: 45%; width: 10%; height: 150px; background: repeating-linear-gradient(0deg, #d7ccc8, #d7ccc8 10px, #8d6e63 12px); border-top: none; writing-mode: vertical-rl;}
+  .entrada { bottom: 0; left: 40%; width: 20%; height: 40px; border-bottom: none; background-color: #d7ccc8; z-index: 2;}
+  .banos { top: 10%; left: 0; width: 40px; height: 150px; background-color: #b3e5fc; border: 2px solid #0288d1; writing-mode: vertical-rl; display:flex; justify-content: center; align-items: center;}
+  
+  /* Decoración (Plantas) */
+  .planta {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-color: #2e7d32;
+    border-radius: 50%;
+    bottom: 10px;
+    z-index: 1;
+  }
+  .p-izq { left: 32.5%; }
+  .p-der { left: 61%; }
+  
+  /* --- LAS MESAS (POSICIONAMIENTO ABSOLUTO) --- */
+  .table-btn {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1rem;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+  }
+  
+  .table-btn:hover {
+    transform: scale(1.1);
+    z-index: 11;
+  }
+  
+  /* Formas de mesas según la imagen */
+  .shape-circle { border-radius: 50%; width: 50px; height: 50px; }
+  .shape-square { border-radius: 10px; width: 55px; height: 55px; }
+  .shape-rect { border-radius: 10px; width: 80px; height: 60px; }
+  
+  /* Estados (Colores) */
+  .status-libre { background-color: #a5d6a7; border: 2px solid #4caf50; } /* Verde suave */
+  .status-pendiente { background-color: #ffcc80; border: 2px solid #ff9800; } /* Naranjo suave */
+  .status-ocupada { background-color: #ef9a9a; border: 2px solid #ef5350; cursor: not-allowed; } /* Rojo suave */
+  
+  /* Seleccionada (Verde Fuerte) */
+  .status-selected {
+    background-color: #2e7d32 !important; /* Verde Fuerte */
+    border: 2px solid #1b5e20 !important;
+    transform: scale(1.15);
+    box-shadow: 0 0 15px rgba(46, 125, 50, 0.6);
+    z-index: 20;
+  }
+  
+  /* --- LADO DERECHO: PANEL DE INFORMACIÓN --- */
+  .map-sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f5f0e6;
+    border-radius: 10px;
+    padding: 15px;
+  }
+  
+  .floor-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #8d6e63;
+  }
+  
+  .tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    color: #8d6e63;
+  }
+  
+  .tab.active {
+    background: linear-gradient(to bottom, transparent, rgba(141, 110, 99, 0.1));
+    color: #3e2723;
+    border-bottom: 3px solid #3e2723;
+  }
+  
+  .legend {
+    margin-bottom: 20px;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #5d4037;
+  }
+  
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  
+  .table-details {
+    margin-top: auto;
+    text-align: center;
+  }
+  
+  .quijote-sidebar-img {
+    width: 80px;
+    height: auto;
+    margin: 10px auto;
+    opacity: 0.8;
+    filter: sepia(1);
+  }
+  
+  .btn-select-final {
+    width: 100%;
+    padding: 15px;
+    background-color: #5d4037; /* Café oscuro */
+    color: white;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    border-radius: 5px;
+  }
+  
+  .btn-select-final:disabled {
+    background-color: #bdbdbd;
+    cursor: not-allowed;
+  }

@@ -27,8 +27,8 @@ export default function ReviewForm({ onReviewAdded }) {
   }
 
   return (
-    <div style={{ marginTop: '30px', padding: '20px', backgroundColor: 'white', borderRadius: '15px', maxWidth: '500px', width: '100%', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-      <h3 style={{ marginBottom: '15px', color: '#333' }}>Dejar una Reseña ✍️</h3>
+    <div style={{ marginTop: '10px', padding: '20px', backgroundColor: 'white', borderRadius: '15px', maxWidth: '550px', width: '100%', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+      <h3 style={{ marginBottom: '15px', color: '#333' }}>Dejar una Reseña</h3>
       
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <input 

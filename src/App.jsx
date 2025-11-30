@@ -1,18 +1,30 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import Navbar from './components/Navbar'
 import Home from './pages/Home'
+import Admin from './pages/Admin'
+import LoginPersonal from './pages/LoginPersonal'
 
-// Componente temporal para que el botón funcione
-const Reservar = () => <h1 style={{color: 'black', textAlign: 'center'}}>Aquí irá el formulario de reservas</h1>
+function Layout() {
+  const location = useLocation()
 
-function App() {
+  const hideNavbar = location.pathname === '/admin'
+
   return (
-    <BrowserRouter>
+    <>
+      {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/reservar" element={<Reservar />} />
+        <Route path="/personal" element={<LoginPersonal />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
-    </BrowserRouter>
+    </>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Layout />
+    </BrowserRouter>
+  )
+}

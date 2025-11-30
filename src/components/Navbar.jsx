@@ -1,21 +1,16 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
+export default function Navbar({ onReserveClick }) {
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 100) {
-        setScrolled(true)
-      } else {
-        setScrolled(false)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
@@ -23,10 +18,18 @@ export default function Navbar() {
         <img src="/LogoQuijoteHD.png" alt="Quijote Logo" className="nav-logo" />
 
         <div className="nav-buttons">
-          <Link to="/reservar" className="nav-btn">Reservar</Link>
-          <button className="nav-btn personal">Personal</button>
+          <button 
+            onClick={onReserveClick}
+            className="nav-btn"
+          >
+            Reservar
+          </button>
+
+          <Link to="/personal" className="nav-btn personal">
+            Personal
+          </Link>
         </div>
       </div>
     </nav>
-  )
+  );
 }

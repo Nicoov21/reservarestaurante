@@ -113,25 +113,40 @@ body {
 }
 
 .btn-reserva {
-  background-color: #6d4c41;
+  position: absolute;
+  bottom: 120px;       
+  left: 50%;
+  transform: translateX(-50%);   
+  z-index: 10;
+
+  background: linear-gradient(135deg, #a67c52, #8b5e3c);
   color: white;
-  padding: 15px 40px;
-  font-size: 1.2rem;
-  text-decoration: none;
-  border-radius: 50px;
-  border: 2px solid rgba(255,255,255,0.2);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  font-weight: bold;
+  padding: 18px 60px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 60px;
+  box-shadow: 
+    0 12px 30px rgba(0, 0, 0, 0.5),
+    inset 0 -5px 15px rgba(0, 0, 0, 0.3);
   cursor: pointer;
-  margin-bottom: 125px;
-  transition: all 0.3s ease; 
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
 }
 
 .btn-reserva:hover {
-  background-color: #8d6e63;
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-  border-color: white;
+  background: linear-gradient(135deg, #b58963, #9d6b45);
+  transform: translateX(-50%) translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.6),
+    inset 0 -5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.btn-reserva:active {
+  transform: translateX(-50%) translateY(-4px);
 }
 
 .carousel-section {
@@ -470,6 +485,7 @@ body {
   font-size: 1.2rem;
   margin-bottom: 15px;
   font-weight: normal;
+  text-align: right;
 }
 
 .footer-contact p {
@@ -634,5 +650,24 @@ body {
   .footer-contact {
     width: 100%;
     text-align: center;
+  }
+}
+
+.reserva-form-container {
+  padding: 30px;
+  width: 500px;
+  max-width: 100%;
+}
+
+.reserva-form-container.wide-mode {
+  width: 1000px;
+  max-width: 95vw;
+}
+
+@media (max-width: 768px) {
+  .reserva-form-container, 
+  .reserva-form-container.wide-mode {
+    width: 100% !important;
+    padding: 20px;
   }
 }
