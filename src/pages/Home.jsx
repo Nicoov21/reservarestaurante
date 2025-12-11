@@ -6,8 +6,8 @@ import ReviewsSection from '../components/Reviews';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import { supabase } from '../supabaseClient';
-import '../components/TableMap.css';
-import emailjs from '@emailjs/browser';
+import '../components/TableMap.css'; 
+import GestionarReserva from '../components/GestionarReserva'
 
 const tablePositions = {
   1: { top: '83%', left: '5%', shape: 'shape-circle', floor: 1 },
@@ -27,7 +27,6 @@ const tablePositions = {
   15: { top: '20%', left: '70%', shape: 'shape-circle', floor: 1 },
   16: { top: '23%', left: '85%', shape: 'shape-circle', floor: 1 },
 
-  // Piso 2
   29: { top: '10%', left: '5%', shape: 'shape-rect', floor: 2 },
   24: { top: '10%', left: '25%', shape: 'shape-square', floor: 2 },
   30: { top: '35%', left: '8%', shape: 'shape-circle', floor: 2 },
@@ -44,7 +43,7 @@ const tablePositions = {
   18: { top: '82%', left: '87%', shape: 'shape-circle', floor: 2 },
 };
 
-const TableMap = ({ fecha, hora, onConfirmTable, onBack }) => {
+const TableMap = ({ fecha, hora, personas, onConfirmTable, onBack }) => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTable, setSelectedTable] = useState(null);
@@ -55,7 +54,9 @@ const TableMap = ({ fecha, hora, onConfirmTable, onBack }) => {
       setLoading(true);
       try {
         const { data: tablesData } = await supabase.from('tables').select('*').order('id_table');
-        const targetTimestamp = `${fecha}T${hora}:00`;
+        
+        const targetTimestamp = `${fecha}T${hora}:00Z`;
+
         const { data: bookingsData } = await supabase
           .from('booking')
           .select('id_table, status_b')
@@ -115,17 +116,22 @@ const TableMap = ({ fecha, hora, onConfirmTable, onBack }) => {
           if (!pos) return null;
           if (pos.floor !== activeFloor) return null;
 
+          const isValidCapacity = mesa.capacity >= personas && mesa.capacity < (personas + 2);
+          const isDisabled = mesa.estadoActual !== 'libre' || !isValidCapacity;
+
           const isSelected = selectedTable?.id_table === mesa.id_table;
           let statusClass = `status-${mesa.estadoActual}`;
           if (isSelected) statusClass = 'status-selected';
+          if (!isValidCapacity) statusClass = 'status-invalid-capacity';
 
           return (
             <button
               key={mesa.id_table}
               className={`table-btn ${pos.shape} ${statusClass}`}
-              style={{ top: pos.top, left: pos.left }}
-              disabled={mesa.estadoActual !== 'libre'}
+              style={{ top: pos.top, left: pos.left, opacity: isDisabled ? 0.5 : 1, cursor: isDisabled ? 'not-allowed' : 'pointer' }}
+              disabled={isDisabled}
               onClick={() => setSelectedTable(mesa)}
+              title={!isValidCapacity ? `Mesa para ${mesa.capacity} pers.` : `Mesa ${mesa.number_table}`}
             >
               {mesa.number_table ? mesa.number_table.replace('Mesa ', '') : mesa.id_table}
             </button>
@@ -140,7 +146,7 @@ const TableMap = ({ fecha, hora, onConfirmTable, onBack }) => {
         </div>
         <div className="legend">
           <div className="legend-item"><div className="dot" style={{background:'#a5d6a7'}}></div> Disponible</div>
-          <div className="legend-item"><div className="dot" style={{background:'#ffcc80'}}></div> Pendiente</div>
+          <div className="legend-item"><div className="dot" style={{background:'#ccc', opacity:0.5}}></div> Capacidad incorrecta</div>
           <div className="legend-item"><div className="dot" style={{background:'#ef9a9a'}}></div> Ocupada</div>
         </div>
         <div className="table-details">
@@ -152,23 +158,9 @@ const TableMap = ({ fecha, hora, onConfirmTable, onBack }) => {
           ) : (
             <p style={{color:'#999'}}>Selecciona una mesa</p>
           )}
-          
           <img src="/FondoImagen.png" alt="Quijote" className="quijote-sidebar-img" />
-          
-          <button 
-            className="btn-select-final"
-            disabled={!selectedTable}
-            onClick={() => onConfirmTable(selectedTable)}
-          >
-            Seleccionar
-          </button>
-
-          <button 
-            onClick={onBack}
-            style={{marginTop:'10px', background:'none', border:'none', textDecoration:'underline', cursor:'pointer'}}
-          >
-            Volver
-          </button>
+          <button className="btn-select-final" disabled={!selectedTable} onClick={() => onConfirmTable(selectedTable.id_table)}>Seleccionar</button>
+          <button onClick={onBack} style={{marginTop:'10px', background:'none', border:'none', textDecoration:'underline', cursor:'pointer'}}>Volver</button>
         </div>
       </div>
     </div>
@@ -187,6 +179,28 @@ const ReservarFormulario = ({ onClose }) => {
   const [hora, setHora] = useState("");
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [loading, setLoading] = useState(false);
+  const [lastCode, setLastCode] = useState("");
+
+  const handleDateChange = (e) => {
+    const selectedDate = e.target.value;
+    if (!selectedDate) { setFecha(""); return; }
+    const today = new Date().toISOString().split('T')[0];
+    if (selectedDate < today){
+      setToast({ show: true, message: "No puedes reservar en fechas pasadas.", type: "error" });
+      setTimeout(() => setToast({show: false}), 3000);
+      setFecha("");
+      return;
+    }
+    const dateObj = new Date(selectedDate);
+    const dayOfWeek = dateObj.getUTCDay();
+    if (dayOfWeek === 0) {
+      setToast({ show: true, message: "Lo sentimos, el restaurante cierra los domingos.", type: "error" });
+      setTimeout(() => setToast({ show: false }), 3000);
+      setFecha("");
+      return;
+    }
+    setFecha(selectedDate);
+  };
 
   const handleContinue = (e) => {
     e.preventDefault();
@@ -195,33 +209,15 @@ const ReservarFormulario = ({ onClose }) => {
       setTimeout(() => setToast({ show: false }), 3000);
       return;
     }
+    if (!email.includes('@')) {
+      setToast({ show: true, message: "Por favor ingresar un correo válido (falta el @)", type: "error" });
+      setTimeout(() => setToast({ show: false }), 3000);
+      return;
+    }
     setStep(2);
   };
 
-  const sendConfirmationEmail = (tableId) => {
-    const templateParams = {
-      to_name: nombre,
-      to_email: email,
-      date: fecha,
-      time: hora,
-      table: tableId,
-      people: personas
-    };
-
-    emailjs.send(
-      'service_axvoarn',
-      'template_7lr3y8a',
-      templateParams,
-      'u8h_INl_ULHEvFfKL'
-    )
-    .then((response) => {
-      console.log('Correo enviado con éxito!', response.status, response.text);
-    }, (error)  => {
-      console.error('Error al enviar correo:', error);
-    });
-  };
-
-  const handleFinalSubmit = async (table) => {
+  const handleFinalSubmit = async (tableId) => {
     setLoading(true);
     try {
       let clientId = null;
@@ -240,12 +236,15 @@ const ReservarFormulario = ({ onClose }) => {
           .from('clients')
           .insert([{ name_client: nombre, email_client: email, number_client: telefono, history_reserve: 0 }])
           .select().single();
-        
         if (createError) throw createError;
         clientId = newClient.id_client;
       }
 
-      const timestamp = `${fecha}T${hora}:00`; 
+      const timestamp = `${fecha}T${hora}:00Z`; 
+      
+      const uniqueCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      setLastCode(uniqueCode);
+
       const { error: bookingError } = await supabase.from('booking').insert([{
             date_hour: timestamp,
             number_people: personas,
@@ -253,27 +252,15 @@ const ReservarFormulario = ({ onClose }) => {
             status_b: 'pendiente',
             commentary: comentario,
             baby_chair: sillaBebe,
-            id_table: table.id_table
+            id_table: tableId,
+            booking_code: uniqueCode
       }]);
 
       if (bookingError) throw bookingError;
-      
-      const newBooking = {
-        id: Date.now(),
-        date: fecha,
-        time: hora,
-        client: nombre,
-        people: `${personas} personas`,
-        table: table.number_table,
-        status: 'Pendiente'
-      };
 
-      const existingBookings = JSON.parse(localStorage.getItem('reservations')) || [];
-      localStorage.setItem('reservations', JSON.stringify([...existingBookings, newBooking]));
-
-      sendConfirmationEmail(table.id_table);
       setLoading(false);
       setStep(3);
+
     } catch (error) {
       console.error(error);
       setToast({ show: true, message: "Error: " + error.message, type: "error" });
@@ -282,12 +269,12 @@ const ReservarFormulario = ({ onClose }) => {
   };
 
   return (
-    <div className={`reserva-form-container ${step >= 2 ? 'wide-mode' : ''}`}>
+    <div className={`reserva-form-container ${step === 2 ? 'wide-mode' : ''}`}>
       {step === 1 && (
         <>
           <h3>Reserva tu mesa en Quijote</h3>
           <div className="frame-container">
-            <input type="date" value={fecha} min={new Date().toISOString().split('T')[0]} onChange={(e) => setFecha(e.target.value)} required />
+            <input type="date" value={fecha} min={new Date().toISOString().split('T')[0]} onChange={handleDateChange} required />
             <select value={hora} onChange={(e) => setHora(e.target.value)} required>
               <option value="">Seleccione la hora:</option>
               <option>13:00</option><option>14:00</option><option>15:00</option>
@@ -301,14 +288,13 @@ const ReservarFormulario = ({ onClose }) => {
             ))}
           </div>
           <div className="baby-chair">
-            <input type="checkbox" checked={sillaBebe} onChange={() => setSillaBebe(!sillaBebe)} />
+            <input type="checkbox" checked={sillaBebe} onChange={(e) => setSillaBebe(e.target.checked)} />
             <label>¿Desea silla para bebé?</label>
           </div>
-          <p className="fill-data">¡Rellena con tus datos!</p>
           <input type="text" placeholder="Nombre completo" value={nombre} onChange={e=>setNombre(e.target.value)} required />
           <div className="email-phone">
             <input type="email" placeholder="Correo electrónico" value={email} onChange={e=>setEmail(e.target.value)} required />
-            <input type="tel" placeholder="+56 9..." value={telefono} onChange={e=>setTelefono(e.target.value)} required />
+            <input type="tel" placeholder="+56..." value={telefono} onChange={e=>setTelefono(e.target.value)} required />
           </div>
           <textarea placeholder="Alergias, evento especial, etc..." rows="3" value={comentario} onChange={e=>setComentario(e.target.value)} />
           {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
@@ -319,26 +305,41 @@ const ReservarFormulario = ({ onClose }) => {
       {step === 2 && (
         <>
            {loading ? <div style={{padding: 40, textAlign: 'center'}}>Procesando...</div> : 
-             <TableMap fecha={fecha} hora={hora} onConfirmTable={handleFinalSubmit} onBack={() => setStep(1)} />
+             <TableMap 
+               fecha={fecha} 
+               hora={hora} 
+               personas={personas} 
+               onConfirmTable={handleFinalSubmit} 
+               onBack={() => setStep(1)} 
+             />
            }
         </>
       )}
 
       {step === 3 && (
         <div style={{textAlign: 'center', padding: '40px 20px'}}>
-          <div style={{width: '80px', height: '80px', background: '#4caf50', borderRadius: '50%', color: 'white', fontSize: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px'}}>✓</div>
-          <h2 style={{color: '#3e2723', marginBottom: '20px'}}>¡Reserva Confirmada!</h2>
-          <p style={{fontSize: '1.2rem', color: '#555', lineHeight: '1.6'}}>
-            Te esperamos el <strong>{fecha}</strong> a las <strong>{hora}</strong> horas.
+          <div style={{width: '80px', height: '80px', background: '#ff9800', borderRadius: '50%', color: 'white', fontSize: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px'}}>
+            ⏳
+          </div>
+          <h2 style={{color: '#3e2723', marginBottom: '10px'}}>¡Solicitud Enviada!</h2>
+          
+          {/* MUESTRA EL CÓDIGO */}
+          <div style={{background:'#f9f9f9', border:'1px dashed #3e2723', padding:'15px', borderRadius:'10px', margin:'20px auto', maxWidth:'300px'}}>
+             <p style={{margin:0, fontSize:'0.9rem', color:'#666'}}>Tu código de seguimiento:</p>
+             <h1 style={{margin:'5px 0', fontSize:'2rem', color:'#3e2723', letterSpacing:'3px'}}>
+               {lastCode}
+             </h1>
+             <small style={{color:'#888', fontSize:'0.8rem'}}>Guárdalo para gestionar tu reserva</small>
+          </div>
+
+          <p style={{fontSize: '1rem', color: '#555', lineHeight: '1.5'}}>
+            La solicitud ha sido enviada a gerencia. Cuando se confirme, recibirás el correo oficial en <strong>{email}</strong>.
           </p>
-          <p style={{fontSize: '1rem', color: '#666', marginTop: '10px'}}>
-            Te hemos enviado un correo para respaldar la confirmación a:<br/>
-            <strong style={{color: '#e67e22'}}>{email}</strong>
-          </p>
-          <button className="continue-button" style={{marginTop: '40px', width: '200px'}} 
+          
+          <button className="continue-button" style={{marginTop: '30px', width: '200px'}} 
             onClick={() => { 
               onClose(); 
-              setStep(1); setNombre(""); setEmail(""); setFecha(""); setHora(""); setTelefono(""); setComentario(""); 
+              setStep(1); setNombre(""); setEmail(""); setFecha(""); setHora(""); setTelefono(""); setComentario(""); setLastCode("");
             }}>
             Entendido
           </button>
@@ -348,12 +349,13 @@ const ReservarFormulario = ({ onClose }) => {
   );
 };
 
-// --- 4. COMPONENTE PRINCIPAL HOME ---
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isManageOpen, setIsManageOpen] = useState(false);
+
   return (
     <>
-      <Navbar onReserveClick={() => setIsModalOpen(true)} />
+      <Navbar onReserveClick={() => setIsModalOpen(true)} onManageClick={() => setIsManageOpen(true)} />
       <div style={{ position: 'relative', height: '100vh', backgroundImage: 'url("/FondoQuijoteHDD.jpeg")', backgroundSize: 'cover', backgroundPosition: 'center top', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', color: 'white' }} className="hero-section">
         <button onClick={() => setIsModalOpen(true)} className="btn-reserva" style={{ position: 'absolute', bottom: '100px', background: 'linear-gradient(135deg, #a67c52, #8b5e3c)', color: 'white', padding: '20px 50px', fontSize: '1rem', fontWeight: '600', letterSpacing: '3px', textTransform: 'uppercase', border: 'none', borderRadius: '60px', boxShadow: '0 20px 50px rgba(0,0,0,0.7)', cursor: 'pointer', zIndex: 10 }}>
           Hacer una reserva
@@ -363,8 +365,15 @@ export default function Home() {
       <LocationSection />
       <ReviewsSection />
       <Footer />
+      
+      {/* MODAL RESERVA */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ReservarFormulario onClose={() => setIsModalOpen(false)} />
+      </Modal>
+
+      {/* MODAL GESTIONAR (Asegúrate de importar GestionarReserva al inicio) */}
+      <Modal isOpen={isManageOpen} onClose={() => setIsManageOpen(false)}>
+        <GestionarReserva onClose={() => setIsManageOpen(false)} />
       </Modal>
     </>
   );

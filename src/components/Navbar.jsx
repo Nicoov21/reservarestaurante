@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function Navbar({ onReserveClick }) {
+export default function Navbar({ onReserveClick, onManageClick }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -18,6 +18,13 @@ export default function Navbar({ onReserveClick }) {
         <img src="/LogoQuijoteHD.png" alt="Quijote Logo" className="nav-logo" />
 
         <div className="nav-buttons">
+          <button 
+              onClick={onManageClick} 
+              className="nav-btn"
+              style={{cursor: 'pointer', marginRight: '10px', background: 'transparent', border: '1px solid white'}} 
+            >
+              Gestionar
+          </button>
           <button 
             onClick={onReserveClick}
             className="nav-btn"

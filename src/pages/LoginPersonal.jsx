@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient'; // IMPORTANTE: Importar cliente
 
-// --- Iconos SVG --- 
+// --- Iconos SVG (Se mantienen igual) --- 
 const UserIcon = ({ style }) => (
   <svg style={style} width="20" height="20" viewBox="0 0 24 24" fill="#9e9e9e" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -15,32 +16,44 @@ const LockIcon = ({ style }) => (
 );
 
 export default function LoginPersonal() {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState(''); // Cambié 'username' por 'email'
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  // --- LÓGICA DE LOGIN REAL ---
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Simulación de login
-    if (username === 'admin' && password === 'admin') {
-      localStorage.setItem('isAdmin', 'true');
-      navigate('/admin');
-    } else {
-      setError('Credenciales incorrectas');
+    try {
+      // 1. Preguntamos a Supabase si el usuario existe
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      // 2. Si existe, Supabase guarda la sesión automática y nosotros redirigimos
+      console.log("Login correcto:", data);
+      navigate('/Admin'); // Asegúrate que la ruta sea '/Admin' (con mayúscula si así está en App.jsx)
+
+    } catch (error) {
+      console.error(error);
+      setError('Credenciales incorrectas o usuario no registrado.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div style={{
       display: 'flex',
       minHeight: '100vh',
-      background: '#F1ECE5', // Tono beige principal
+      background: '#F1ECE5',
       fontFamily: '"Helvetica Neue", Arial, sans-serif',
     }}>
       {/* --- Columna del Formulario --- */}
@@ -66,7 +79,7 @@ export default function LoginPersonal() {
             style={{ 
               width: '200px', 
               marginBottom: '10px', 
-              filter: 'invert(1)' // Invierte el color de la imagen (blanco a negro)
+              filter: 'invert(1)' 
             }} 
           />
           <p style={{ margin: '0', color: '#B0A59A', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>
@@ -77,15 +90,15 @@ export default function LoginPersonal() {
           </p>
           
           <form onSubmit={handleLogin} style={{ marginTop: '40px' }}>
-            {error && <p style={{ color: '#d32f2f', fontSize: '0.9rem' }}>{error}</p>}
+            {error && <div style={{ color: '#d32f2f', fontSize: '0.9rem', marginBottom: '15px', background: '#ffebee', padding: '10px', borderRadius: '5px' }}>{error}</div>}
 
             <div style={{ position: 'relative', marginBottom: '20px' }}>
               <UserIcon style={{ position: 'absolute', top: '50%', left: '18px', transform: 'translateY(-50%)' }}/>
               <input
-                type="text"
-                placeholder="Nombre de usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email" // Importante: type email para validación navegador
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 style={{
                   width: '100%',
@@ -131,7 +144,8 @@ export default function LoginPersonal() {
                 color: 'white',
                 fontSize: '1rem',
                 fontWeight: 'bold',
-                cursor: 'pointer',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
                 transition: 'background 0.3s',
               }}
             >
@@ -140,16 +154,12 @@ export default function LoginPersonal() {
           </form>
         </div>
 
-         <p style={{ 
-            marginTop: '30px', 
-            color: '#8D6E63', 
-            fontSize: '0.9rem' 
-          }}>
-            ¿No puedes ingresar?{' '}
-            <a href="#" style={{ color: '#6F5B4C', fontWeight: 'bold', textDecoration:'none' }}>
-              Recuperar contraseña
-            </a>
-          </p>
+         <p style={{ marginTop: '30px', color: '#8D6E63', fontSize: '0.9rem' }}>
+           ¿No puedes ingresar?{' '}
+           <a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#6F5B4C', fontWeight: 'bold', textDecoration:'none' }}>
+             Recuperar contraseña
+           </a>
+         </p>
       </div>
 
       {/* --- Columna de la Imagen --- */}

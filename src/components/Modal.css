@@ -84,6 +84,7 @@
   
   .people-selector {
     display: flex;
+    justify-content: center;
     gap: 10px;
     margin-bottom: 14px;
   }
@@ -118,8 +119,10 @@
   .baby-chair {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     margin-bottom: 14px;
+    width: auto;
   }
   
   hr {
@@ -129,7 +132,7 @@
   }
 
   
-  input,
+  input:not([type="checkbox"]),
   textarea {
     width: 100%;
     padding: 12px;
